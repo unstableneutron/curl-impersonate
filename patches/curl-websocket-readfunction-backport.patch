@@ -1511,18 +1511,6 @@ diff -ruN base/lib/ws.c new/lib/ws.c
  struct wsfield {
    const char *name;
    const char *val;
-@@ -903,11 +1231,11 @@
-       "Upgrade", "websocket"
-     },
-     {
-       /* The request MUST contain a |Connection| header field whose value
-          MUST include the "Upgrade" token. */
-       "Connection", "Upgrade",
-     },
-     {
-       /* The request MUST include a header field with the name
-          |Sec-WebSocket-Version|. The value of this header field MUST be
-          13. */
 @@ -967,7 +1290,8 @@
  {
    struct SingleRequest *k = &data->req;

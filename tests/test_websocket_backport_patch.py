@@ -1,8 +1,10 @@
+import re
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 BACKPORT_PATCH = "patches/curl-websocket-readfunction-backport.patch"
+HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@")
 
 
 def read(path: str) -> str:
@@ -42,6 +44,24 @@ def test_websocket_backport_patch_documents_upstream_scope() -> None:
     assert "curl 8.18" in patch
 
 
+def test_websocket_backport_patch_has_no_noop_hunks() -> None:
+    """GNU/Git patch parsers reject hunks that contain only context lines."""
+    hunk_lines: list[str] = []
+    hunk_header = ""
+
+    for line in read(BACKPORT_PATCH).splitlines():
+        if HUNK_RE.match(line):
+            if hunk_lines:
+                assert any(l.startswith(('-', '+')) for l in hunk_lines), hunk_header
+            hunk_header = line
+            hunk_lines = []
+            continue
+        if hunk_header and not line.startswith("diff -ruN "):
+            hunk_lines.append(line)
+
+    assert any(l.startswith(('-', '+')) for l in hunk_lines), hunk_header
+
+
 def test_websocket_backport_patch_exports_start_frame_api() -> None:
     patch = read(BACKPORT_PATCH)
 
@@ -59,7 +79,7 @@ def test_websocket_backport_patch_adds_readfunction_frame_encoder() -> None:
     assert "lib/ws.c" in patch
     assert "static const struct Curl_crtype ws_cr_encode" in patch
     assert "curl_ws_start_frame(CURL *d" in patch
-    assert '"Connection", "Upgrade"' in patch
+    assert 'infof(data, "[WS] Received 101, switch to WebSocket")' in patch
     assert "httpreq = HTTPREQ_GET" in patch
     assert "Curl_creader_set_fread(data, -1)" in patch
     assert "Curl_creader_create(&ws_enc_reader, data, &ws_cr_encode" in patch
