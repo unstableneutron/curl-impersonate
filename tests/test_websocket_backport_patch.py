@@ -62,6 +62,15 @@ def test_websocket_backport_patch_has_no_noop_hunks() -> None:
     assert any(l.startswith(('-', '+')) for l in hunk_lines), hunk_header
 
 
+def test_release_libcurl_archives_include_headers() -> None:
+    workflow = read(".github/workflows/build.yml")
+
+    assert "cd ${{ runner.temp }}/install" in workflow
+    assert "include lib" in workflow
+    assert "libcurl-impersonate-${{ github.ref_name }}.${{ matrix.host_label }}.tar.gz include lib" in workflow
+    assert "libcurl-impersonate.${{ matrix.host_label }}.tar.gz include lib" in workflow
+
+
 def test_websocket_backport_patch_exports_start_frame_api() -> None:
     patch = read(BACKPORT_PATCH)
 
